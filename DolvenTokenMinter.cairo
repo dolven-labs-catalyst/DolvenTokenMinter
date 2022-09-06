@@ -90,6 +90,7 @@ func deployNewToken{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
         contract_address_salt=_salt,
         constructor_calldata_size=5,
         constructor_calldata=call_data_array,
+        deploy_from_zero=FALSE,
     )
     let _userNonce : felt = user_nonce.read(msg_sender)
     deployedContracts.write(_salt, new_contract_address)
@@ -108,8 +109,9 @@ func recursiveContractAddresses{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*
     address_nonce : felt
 ) -> (addresses_len : felt, addresses : felt*):
     alloc_locals
+    let _salt : felt = salt.read()
     let contract_address : felt = deployedContracts.read(address_nonce)
-    if contract_address == 0:
+    if address_nonce == _salt:
         let (found_addresses : felt*) = alloc()
         return (0, found_addresses)
     end
@@ -117,7 +119,7 @@ func recursiveContractAddresses{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*
     let (
         address_memory_location_len, addresss_memory_location : felt*
     ) = recursiveContractAddresses(address_nonce + 1)
-    assert [address_memory_location_len] = contract_address
+    assert [addresss_memory_location] = contract_address
     return (address_memory_location_len + 1, addresss_memory_location + 1)
 end
 
@@ -135,6 +137,6 @@ func recursiveContractAddressesByUser{
     let (
         address_memory_location_len, addresss_memory_location : felt*
     ) = recursiveContractAddressesByUser(address_nonce + 1, userAddress)
-    assert [address_memory_location_len] = contract_address
+    assert [addresss_memory_location] = contract_address
     return (address_memory_location_len + 1, addresss_memory_location + 1)
 end
